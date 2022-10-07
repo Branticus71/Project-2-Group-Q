@@ -12,3 +12,16 @@ library(httr)
 library(jsonlite)
 ```
 
+Ideas for functions and analysis:
+- Takes in a cuisine, diet, max time to cook, and number of recipes to return matching recipes use sort= random as default. 
+  -Analysis could be comparing time to cook across different cuisines and diets. Plot average time to cook for each cuisine/diet. 
+- Takes the ID's from the above function and returns nutrition information data as well as the nutrition label widget for a couple recipes.
+  -Analysis could be breakdown of micro or macro nutrients by cuisine/diet. So fat content for Asian vs Mediterranean diet.
+- Takes in a time frame, calories, diet, and any exclusions and returns a meal plan for that time frame.
+  -Compare macronutrients for each diet choice.
+- Takes the meal plan recipe ID's and gets the price per day.
+  -Compare the prices for different diet meal plans.
+- Takes in the meal plan and a selected day and returns the instructions for each meal that day.
+- Takes in a type of wine, price, min rating, and number then returns a number of recommended wines.
+  -Compare relationship of price and rating
+- Takes in ingredients, number of recipes, and returns possible recipes.
