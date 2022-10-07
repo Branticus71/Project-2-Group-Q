@@ -5,3 +5,10 @@ date: "2022-09-28"
 output: html_document #Needs to be removed later, keeping it for now to test how the file knits.
 ---
 
+Packages needed for our functions and data exploration.
+```{r}
+library(tidyverse)
+library(httr)
+library(jsonlite)
+```
+
