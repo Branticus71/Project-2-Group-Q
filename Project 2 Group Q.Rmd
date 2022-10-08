@@ -38,7 +38,6 @@ get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd83453
   wine_rec <- wine_list$recommendedWines %>% 
     select(id, price, averageRating, ratingCount, score) %>% 
     mutate(type = type)
-  #wine_rec <- mutate(wine_rec,type = type)
   return(wine_rec)
 }
 get_wine("merlot", 50)
