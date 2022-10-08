@@ -30,6 +30,31 @@ Ideas for functions and analysis:
 
 # **Functions**
 
+
+## Recipes for cuisine, diet, time to cook
+
+```{r}
+get_recipes <- function(cuisine, diet = "N/A", time, number = 10, API = "965047400ad841198f2fd834535db269"){
+  
+  if(diet == "N/A") {
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time,                                    "&number=", number)
+  } else{
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,                    "&number=", number)
+  }
+  recipe_list <- fromJSON(url)
+  recipe_sample <- recipe_list$results %>% select(id, title)
+  return(recipe_sample)
+}
+
+Italian_no_diet <- get_recipes("Italian", time = 50)
+Italian_Vegan <- get_recipes("Italian", "Vegan", time = 50)
+Italian_no_diet
+Italian_Vegan
+```
+
+
+
+
 ## Wine retrieval function
 ```{r}
 get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
@@ -40,6 +65,7 @@ get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd83453
     mutate(type = type)
   return(wine_rec)
 }
+
 get_wine("merlot", 50)
 
 ```
