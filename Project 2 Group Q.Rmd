@@ -57,8 +57,13 @@ Italian_Vegan
 ## Function to get nutrition from above function properly added
 
 ```{r}
+#Need to clean variables up some then turn it into a function.
+var2 <- c("pricePerServing", "id", "title", "readyInMinutes", "name", "amount", "unit", "percentOfDailyNeeds", "servings")
+df1 <- Italian_Vegan %>% unnest(nutrition) %>% unnest(nutrients) %>% select(var2)
+df1
 
-
+df_wide <- df1 %>% pivot_wider(names_from = name, values_from = c(amount, percentOfDailyNeeds, unit ))
+df_wide
 ```
 
 ## Wine retrieval function
