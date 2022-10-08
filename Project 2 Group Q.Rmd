@@ -6,10 +6,12 @@ output: html_document #Needs to be removed later, keeping it for now to test how
 ---
 
 Packages needed for our functions and data exploration.
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 library(httr)
 library(jsonlite)
+
+#Brant's api key ?apiKey=965047400ad841198f2fd834535db269
 ```
 
 Ideas for functions and analysis:
@@ -25,3 +27,21 @@ Ideas for functions and analysis:
 - Takes in a type of wine, price, min rating, and number then returns a number of recommended wines.
   -Compare relationship of price and rating
 - Takes in ingredients, number of recipes, and returns possible recipes.
+
+# **Functions**
+
+## Wine retrieval function
+```{r}
+get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
+  url <- paste0("https://api.spoonacular.com/food/wine/recommendation?apiKey=", API, "&wine=", type, "&maxPrice=", price, "&number=", number)
+  wine_list <- fromJSON(url)
+  wine_rec <- wine_list$recommendedWines %>% 
+    select(id, price, averageRating, ratingCount, score) %>% 
+    mutate(type = type)
+  #wine_rec <- mutate(wine_rec,type = type)
+  return(wine_rec)
+}
+get_wine("merlot", 50)
+
+```
+
