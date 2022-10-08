@@ -37,12 +37,13 @@ Ideas for functions and analysis:
 get_recipes <- function(cuisine, diet = "N/A", time, number = 10, API = "965047400ad841198f2fd834535db269"){
   
   if(diet == "N/A") {
-    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time,                                    "&number=", number)
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
   } else{
-    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,                    "&number=", number)
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
+  var_names <- c("pricePerServing", "id", "title", "readyInMinutes", "nutrition", "servings")
   recipe_list <- fromJSON(url)
-  recipe_sample <- recipe_list$results %>% select(id, title)
+  recipe_sample <- recipe_list$results %>% select(var_names)
   return(recipe_sample)
 }
 
@@ -53,7 +54,12 @@ Italian_Vegan
 ```
 
 
+## Function to get nutrition from above function properly added
 
+```{r}
+
+
+```
 
 ## Wine retrieval function
 ```{r}
