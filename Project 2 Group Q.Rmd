@@ -35,11 +35,13 @@ Ideas for functions and analysis:
 
 ```{r}
 get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "965047400ad841198f2fd834535db269"){
+  
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
   } else{
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
+  
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
     max = length(allergies)
@@ -92,9 +94,30 @@ get_wine("merlot", 50)
 
 ```
 
-## Get meal plan function
+## Get meal plan function from time frame, daily calories, diet, and allergens
 
 ```{r}
-
+#Outputs a list containing multiple dataframes. Should combine to one dataframe.
+get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", API = "965047400ad841198f2fd834535db269"){
+  
+    if(diet == "N/A") {
+    url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time,"&targetCalories=", calories)
+  } else{
+    url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time, "&diet=", diet,"&targetCalories=", calories)
+  }
+  
+  allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
+  if(allergies[1] %in% allergens){
+   max = length(allergies)
+   for(i in 1:max){
+      url <- paste0(url, "&exclude=", allergies[i])
+    }
+  }
+  meal_plan <- fromJSON(url)
+  return(meal_plan)
+}
+allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish")
+test_plan <- get_plan(calories = 2000, allergies=allergy_list )
+test_plan
 ```
 
