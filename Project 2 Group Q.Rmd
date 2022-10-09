@@ -34,7 +34,7 @@ Ideas for functions and analysis:
 ## Recipes for cuisine, diet, time to cook, a vector/list of allergies.
 
 ```{r}
-get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "ca0e515fe1024fd489a76a3d88fcb775"){
+get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "965047400ad841198f2fd834535db269"){
   
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
@@ -42,6 +42,7 @@ get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "N
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
   
+  allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
     max = length(allergies)
@@ -106,6 +107,7 @@ get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", 
     url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time, "&diet=", diet,"&targetCalories=", calories)
   }
   
+  allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
    max = length(allergies)
