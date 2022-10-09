@@ -42,6 +42,7 @@ get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "N
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
   
+  allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
     max = length(allergies)
@@ -106,6 +107,7 @@ get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", 
     url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time, "&diet=", diet,"&targetCalories=", calories)
   }
   
+  allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
    max = length(allergies)
@@ -120,4 +122,6 @@ allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish
 test_plan <- get_plan(calories = 2000, allergies=allergy_list )
 test_plan
 ```
+
+
 
