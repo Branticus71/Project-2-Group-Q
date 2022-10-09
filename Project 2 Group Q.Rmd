@@ -31,16 +31,23 @@ Ideas for functions and analysis:
 # **Functions**
 
 
-## Recipes for cuisine, diet, time to cook
+## Recipes for cuisine, diet, time to cook, a vector/list of allergies.
 
 ```{r}
-get_recipes <- function(cuisine, diet = "N/A", time, number = 10, API = "965047400ad841198f2fd834535db269"){
-  
+get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "965047400ad841198f2fd834535db269"){
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
   } else{
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
+  allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
+  if(allergies[1] %in% allergens){
+    max = length(allergies)
+   for(i in 1:max){
+      url <- paste0(url, "&intolerances=", allergies[i])
+    }
+  }
+  
   var_names <- c("pricePerServing", "id", "title", "readyInMinutes", "nutrition", "servings")
   recipe_list <- fromJSON(url)
   recipe_sample <- recipe_list$results %>% select(var_names) %>% mutate(Cuisine = cuisine, Diet = diet)
@@ -51,6 +58,10 @@ Italian_no_diet <- get_recipes("Italian", time = 50)
 Italian_Vegan <- get_recipes("Italian", "Vegan", time = 50)
 Italian_no_diet
 Italian_Vegan
+
+allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish")
+allergy_test <- get_recipes("Italian", time = 50, allergies = allergy_list)
+allergy_test
 ```
 
 
