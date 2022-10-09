@@ -43,7 +43,7 @@ get_recipes <- function(cuisine, diet = "N/A", time, number = 10, API = "9650474
   }
   var_names <- c("pricePerServing", "id", "title", "readyInMinutes", "nutrition", "servings")
   recipe_list <- fromJSON(url)
-  recipe_sample <- recipe_list$results %>% select(var_names)
+  recipe_sample <- recipe_list$results %>% select(var_names) %>% mutate(Cuisine = cuisine, Diet = diet)
   return(recipe_sample)
 }
 
@@ -54,16 +54,16 @@ Italian_Vegan
 ```
 
 
-## Function to get nutrition from above function properly added
+## Function to get nutrition from above function properly cleaned and transform data to wide for analysis.
 
 ```{r}
-#Need to clean variables up some then turn it into a function.
-var2 <- c("pricePerServing", "id", "title", "readyInMinutes", "name", "amount", "unit", "percentOfDailyNeeds", "servings")
-df1 <- Italian_Vegan %>% unnest(nutrition) %>% unnest(nutrients) %>% select(var2)
-df1
-
-df_wide <- df1 %>% pivot_wider(names_from = name, values_from = c(amount, percentOfDailyNeeds, unit ))
-df_wide
+clean_nutrition <- function(df){
+  var_list <- c("Cuisine", "Diet", "id", "title","pricePerServing", "readyInMinutes", "name", "amount", "unit", "servings" )
+  df_long <- df %>% unnest(nutrition) %>% unnest(nutrients) %>% select(var_list)
+  df_wide <- df_long %>% pivot_wider(names_from = name, values_from = c(amount, unit ))
+  return(df_wide)
+}
+clean_nutrition(Italian_Vegan)
 ```
 
 ## Wine retrieval function
@@ -78,6 +78,12 @@ get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd83453
 }
 
 get_wine("merlot", 50)
+
+```
+
+## Get meal plan function
+
+```{r}
 
 ```
 
