@@ -34,7 +34,7 @@ Ideas for functions and analysis:
 ## Recipes for cuisine, diet, time to cook, a vector/list of allergies.
 
 ```{r}
-get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "965047400ad841198f2fd834535db269"){
+get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "ca0e515fe1024fd489a76a3d88fcb775"){
   
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
@@ -119,5 +119,16 @@ get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", 
 allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish")
 test_plan <- get_plan(calories = 2000, allergies=allergy_list )
 test_plan
+```
+
+
+```{r}
+getminmacros <- function(minCalories, API = "ca0e515fe1024fd489a76a3d88fcb775"){
+  url <- paste0("https://api.spoonacular.com/recipes/findByNutrients?apiKey=", API, "&minCalories=", minCalories)
+  calories_list <- fromJSON(url)
+  return(calories_list)
+}
+
+getminmacros(0)
 ```
 
