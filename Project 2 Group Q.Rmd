@@ -135,6 +135,6 @@ getmacros <- function(mincalories = 0, maxcalories = 2000, minProtein = 0, maxPr
 
 
 
-getmacros(20,7000,10,800,30)
+getmacros(20,7000,11,800,30)
 ```
 
