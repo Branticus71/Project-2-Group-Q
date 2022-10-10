@@ -31,7 +31,7 @@ Ideas for functions and analysis:
 # **Functions**
 
 
-## Recipes for cuisine, diet, time to cook, a vector/list of allergies.
+## Recipes for cuisine, diet, time to cook, a list of allergies.
 
 ```{r}
 get_recipes <- function(cuisine, diet = "N/A", time, number = 10, allergies = "None", API = "965047400ad841198f2fd834535db269"){
@@ -82,16 +82,17 @@ clean_nutrition(Italian_Vegan)
 
 ## Wine retrieval function
 ```{r}
-get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
+get_wine <- function(type, price= 6000, number = 100, API = "965047400ad841198f2fd834535db269"){
   url <- paste0("https://api.spoonacular.com/food/wine/recommendation?apiKey=", API, "&wine=", type, "&maxPrice=", price, "&number=", number)
   wine_list <- fromJSON(url)
   wine_rec <- wine_list$recommendedWines %>% 
     select(id, price, averageRating, ratingCount, score) %>% 
-    mutate(type = type)
+    mutate(type = type, averageRating = averageRating * 5)
   return(wine_rec)
 }
 
 get_wine("merlot", 50)
+
 
 ```
 
@@ -124,7 +125,7 @@ test_plan
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 getminmacros <- function(minCalories, API = "ca0e515fe1024fd489a76a3d88fcb775"){
   url <- paste0("https://api.spoonacular.com/recipes/findByNutrients?apiKey=", API, "&minCalories=", minCalories)
   calories_list <- fromJSON(url)
@@ -132,5 +133,29 @@ getminmacros <- function(minCalories, API = "ca0e515fe1024fd489a76a3d88fcb775"){
 }
 
 getminmacros(0)
+```
+
+# Ideas for Exploratory Data Analysis
+Contingency table: Cuisine as row, diet as columns, number of recipes as values
+  -Need to modify first function to return totalResults as well
+Numerical Summaries: price at different wine categories - Mean, median, standard deviation 
+  -Just set max price to something ridiculously high to get the largest dataset possible
+Bar plot: average time to cook for each cuisine
+Histogram: Average rating for wine, each box of width 1, so 0-1, 1-2, 2-3, 3-4, 4-5
+Box plot: Fat/Carb/Protein content by cuisine
+Scatter plot: Price vs rating for wine
+
+
+
+
+## Wine Exploratory Data Analysis
+
+Begins by calling the wine_rec function for 10 different popular wines then combines the results into one dataframe for analysis.
+```{r}
+wine_list <- c("merlot", "riesling","chardonnay", "sauvignon_blanc", "pinot_noir", "cabernet_sauvignon", "moscato", "champagne", "prosecco", "zinfandel")
+wine_rec_list <-wine_list %>%
+  lapply(get_wine) %>%
+  bind_rows()
+wine_rec_list
 ```
 
