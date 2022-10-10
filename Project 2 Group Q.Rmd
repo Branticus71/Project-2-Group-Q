@@ -125,12 +125,16 @@ test_plan
 
 
 ```{r}
-getminmacros <- function(minCalories, API = "ca0e515fe1024fd489a76a3d88fcb775"){
-  url <- paste0("https://api.spoonacular.com/recipes/findByNutrients?apiKey=", API, "&minCalories=", minCalories)
-  calories_list <- fromJSON(url)
+getmacros <- function(mincalories = 0, maxcalories = 2000, minProtein = 0, maxProtein = 700, number = 20, random = TRUE,API = "ca0e515fe1024fd489a76a3d88fcb775"){
+  
+    url <- paste0("https://api.spoonacular.com/recipes/findByNutrients?apiKey=", API, "&minCalories=", mincalories, "&maxCalories=", maxcalories, "&minProtein=", minProtein, "&maxProtein=",maxProtein, "&number=", number, "&random=", random)
+    calories_list <- fromJSON(url)
+    new_calories_list <- calories_list%>%select(calories,protein,fat,carbs)
   return(calories_list)
 }
 
-getminmacros(0)
+
+
+getmacros(20,7000,10,800,30)
 ```
 
