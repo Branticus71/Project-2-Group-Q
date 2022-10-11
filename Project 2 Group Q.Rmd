@@ -35,13 +35,16 @@ Ideas for functions and analysis:
 ## Recipes for cuisine, diet, time to cook, a vector/list of allergies.
 
 ```{r}
-get_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "05671e9eac144e52907ef1a7a7e37874"){
+get_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "238e5276c39d42ceb50a7063db2c7306"){
   
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
   } else{
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
+  
+  
+  
   
   allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
@@ -66,6 +69,69 @@ Italian_Vegan
 allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish")
 allergy_test <- get_recipes("Italian", time = 50, allergies = allergy_list)
 allergy_test
+
+#American Vegan Function
+
+Amerivegan_get_recipes <- function(cuisine="American", diet = "Vegan", time = 300, number = 100, allergies = "None", API = "238e5276c39d42ceb50a7063db2c7306"){
+  
+  if(diet == "N/A") {
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
+  } else{
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
+  }
+  
+  
+  
+  
+  allergies <- as.list(allergies)
+  allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
+  if(allergies[1] %in% allergens){
+    max = length(allergies)
+    for(i in 1:max){
+      url <- paste0(url, "&intolerances=", allergies[i])
+    }
+  }
+  
+  var_names <- c("pricePerServing", "id", "title", "readyInMinutes", "nutrition", "servings")
+  recipe_list <- fromJSON(url)
+  recipe_sample <- recipe_list$results %>% select(var_names) %>% mutate(Cuisine = cuisine, Diet = diet)
+  return(recipe_sample)
+}
+
+Amerivegan_get_recipes()
+
+#Keto Function
+
+
+keto_get_recipes <- function(cuisine="Italian", diet = "Ketogenic", time = 300, number = 100, allergies = "None", API = "238e5276c39d42ceb50a7063db2c7306"){
+  
+  if(diet == "N/A") {
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
+  } else{
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
+  }
+  
+  
+  
+  
+  allergies <- as.list(allergies)
+  allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
+  if(allergies[1] %in% allergens){
+    max = length(allergies)
+    for(i in 1:max){
+      url <- paste0(url, "&intolerances=", allergies[i])
+    }
+  }
+  
+  var_names <- c("pricePerServing", "id", "title", "readyInMinutes", "nutrition", "servings")
+  recipe_list <- fromJSON(url)
+  recipe_sample <- recipe_list$results %>% select(var_names) %>% mutate(Cuisine = cuisine, Diet = diet)
+  return(recipe_sample)
+}
+
+keto_get_recipes()
+
+
 ```
 
 
@@ -84,7 +150,7 @@ clean_nutrition(Italian_Vegan)
 ## Wine retrieval function
 ```{r}
 
-get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
+#get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
 
 get_wine <- function(type, price= 6000, number = 100, API = "05671e9eac144e52907ef1a7a7e37874"){
 
@@ -109,7 +175,7 @@ get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", 
     if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time,"&targetCalories=", calories)
   } else{
-    url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time, "&diet=", diet,"&targetCalories=", calories)
+    url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time, "&diet=", diet,"&targetCdddfgdfdsfsdfdsalories=", calories)
   }
   
   allergies <- as.list(allergies)
@@ -181,8 +247,17 @@ cuisine_rec_df <- cuisine_list %>%
 cuisine_rec_df
 
 
+
+
+
+#Plots and Contingency table
+
 ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
+table(cuisine_rec_df$Cuisine,cuisine_rec_df$Diet)
+table(cuisine_Amerivegrec_df$Cuisine,cuisine_Amerivegrec_df$Diet)
+table(cuisine_Chinesevegrec_df$Cuisine,cuisine_Chinesevegrec_df$Diet)
+
 ```
 
