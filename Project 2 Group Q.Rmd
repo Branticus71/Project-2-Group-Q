@@ -152,7 +152,7 @@ clean_nutrition(Italian_Vegan)
 
 #get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
 
-get_wine <- function(type, price= 6000, number = 100, API = "05671e9eac144e52907ef1a7a7e37874"){
+get_wine <- function(type, price= 6000, number = 100, API = "bd2aacb7b0514c5c88cc3ab82a16dc02"){
 
   url <- paste0("https://api.spoonacular.com/food/wine/recommendation?apiKey=", API, "&wine=", type, "&maxPrice=", price, "&number=", number)
   wine_list <- fromJSON(url)
@@ -255,9 +255,7 @@ cuisine_rec_df
 ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
-table(cuisine_rec_df$Cuisine,cuisine_rec_df$Diet)
-table(cuisine_Amerivegrec_df$Cuisine,cuisine_Amerivegrec_df$Diet)
-table(cuisine_Chinesevegrec_df$Cuisine,cuisine_Chinesevegrec_df$Diet)
+ggplot(cuisine_rec_df, aes(x = Cuisine, y = readyInMinutes))+geom_bar(stat = "Identity") + xlab("Type of Cuisine")
 
 ```
 
