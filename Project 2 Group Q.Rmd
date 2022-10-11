@@ -221,6 +221,20 @@ ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxp
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Protein") + theme(axis.text.x = element_text(angle = 45))
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Carbohydrates") + theme(axis.text.x = element_text(angle = 45))
 
+fat_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Fat) %>% mutate(fat_Content = if_else(amount_Fat >= 30, "High", if_else(amount_Fat >= 15, "Medium", "Low")))
+protein_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Protein) %>% mutate(protein_Content = if_else(amount_Protein >= 30,      "High", if_else(amount_Protein >= 15, "Medium", "Low")))
+carb_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Carbohydrates) %>% mutate(carb_Content = if_else(amount_Carbohydrates >= 30, "High", if_else(amount_Carbohydrates >= 15, "Medium", "Low")))
+
+fat_table <- table(fat_content_df$Cuisine, fat_content_df$fat_Content)
+protein_table <- table(protein_content_df$Cuisine, protein_content_df$protein_Content)
+carb_table <- table(carb_content_df$Cuisine, carb_content_df$carb_Content)
+names(dimnames(fat_table)) <- c("Cuisine", "Fat Content")
+names(dimnames(protein_table)) <- c("Cuisine", "Protein Content")
+names(dimnames(carb_table)) <- c("Cuisine", "Carbohydrate Content")
+
+fat_table
+protein_table
+carb_table
 ```
 
 
