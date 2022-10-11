@@ -84,15 +84,13 @@ clean_nutrition(Italian_Vegan)
 ## Wine retrieval function
 ```{r}
 
-get_wine <- function(type, price, number = 10, API = "965047400ad841198f2fd834535db269"){
-
 get_wine <- function(type, price= 6000, number = 100, API = "05671e9eac144e52907ef1a7a7e37874"){
 
   url <- paste0("https://api.spoonacular.com/food/wine/recommendation?apiKey=", API, "&wine=", type, "&maxPrice=", price, "&number=", number)
   wine_list <- fromJSON(url)
   wine_rec <- wine_list$recommendedWines %>% 
     select(id, price, averageRating, ratingCount, score) %>% 
-    mutate(type = type)
+    mutate(type = type, averageRating = averageRating * 5, price = parse_number(price))
   return(wine_rec)
 }
 
