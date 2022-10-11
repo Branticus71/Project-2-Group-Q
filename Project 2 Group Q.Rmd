@@ -84,7 +84,7 @@ clean_nutrition(Italian_Vegan)
 
 ```{r}
 cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
-wrapper_cuisines <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
+wrapper_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
   cuisine_wrap <- lapply(cuisine, get_recipes, diet, time, number, allergies, API)
   clean_wrap <- lapply(cuisine_wrap, clean_nutrition)
   result_wrap <- bind_rows(clean_wrap)
@@ -211,7 +211,7 @@ wine_rec_df
 Creates a dataframe with ten different cuisines using the wrapper function then plots the results.
 ```{r}
 cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
-cuisine_rec_df<- wrapper_recipes(cuisine_list, number = 100)
+cuisine_rec_df <- wrapper_recipes(cuisine_list, number = 100)
 cuisine_rec_df
 
 
