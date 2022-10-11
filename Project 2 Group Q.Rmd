@@ -160,11 +160,20 @@ get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", 
     }
   }
   meal_plan <- fromJSON(url)
-  return(meal_plan)
+  
+  if(time == "week"){
+    meal_df <- bind_rows(meal_plan$week$monday$meals, meal_plan$week$tuesday$meals, meal_plan$week$wednesday$meals, meal_plan$week$thursday$meals, meal_plan$week$friday$meals, meal_plan$week$saturday$meals, meal_plan$week$sunday$meals)
+    days <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    nutrition_df <- bind_rows(meal_plan$week$monday$nutrients, meal_plan$week$tuesday$nutrients, meal_plan$week$wednesday$nutrients, meal_plan$week$thursday$nutrients, meal_plan$week$friday$nutrients, meal_plan$week$saturday$nutrients, meal_plan$week$sunday$nutrients) 
+    nutrition_df$Day <- days
+  } else {
+    meal_df <- bind_rows(meal_plan$meals)
+    nutrition_df <- bind_rows(meal_plan$nutrients)
+  }
+  return(list(meals = meal_df, nutrition = nutrition_df))
 }
-allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish")
-test_plan <- get_plan(calories = 2000, allergies=allergy_list )
-test_plan
+
+get_plan(calories = 2000, allergies = "Soy")
 ```
 
 
