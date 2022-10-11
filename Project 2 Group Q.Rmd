@@ -98,14 +98,6 @@ get_wine("merlot", 50)
 
 ```
 
-Wine graphing 
-```{r}
-library(ggplot2)
-gwine <- ggplot(data = wine_rec_df, aes(x = factor(price), y = ratingCount,))
-gwine + geom_point(aes(color = type), position = "jitter") + xlab("price") + ylab("rating") + scale_x_discrete(breaks=1:200)
-
-#commit 
-```
 
 ## Get meal plan function from time frame, daily calories, diet, and allergens
 
@@ -193,3 +185,18 @@ ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ```
 
+Wine Graphing
+Graphing price vs wine rating for different types of wine.
+```{r}
+library(ggplot2)
+gwine <- ggplot(data = wine_rec_df, aes(x = price, y = averageRating,))
+gwine + geom_point(aes(color = type), position = "jitter", size = .5) + xlab("price") + ylab("rating") 
+
+```
+
+Graphing average rating for each type of wine
+```{r}
+library(ggplot2)
+gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating))
+gwinerating + geom_boxplot(fill = "pink") + geom_point(aes(color = type), position = "jitter", size = .5) + theme(axis.text.x = element_text(angle = 45))
+```
