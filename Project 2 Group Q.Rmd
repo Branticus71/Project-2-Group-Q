@@ -34,13 +34,12 @@ Ideas for functions and analysis:
 ## Recipes for cuisine, diet, time to cook, a list of allergies.
 
 ```{r}
-get_recipes <- function(cuisine ="N/A", diet = "N/A", time = 300, number = 100, allergies = "N/A", API = "ea88d9f6e2bc470bbddeb6db653f214b"){
-  url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
-  if(cuisine != "N/A") {
-    url <- paste0(url,"&cuisine=", cuisine )
-  }
-  if(diet != "N/A") {
-    url <- paste0(url, "&diet=", diet)
+get_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "05671e9eac144e52907ef1a7a7e37874"){
+  
+  if(diet == "N/A") {
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
+  } else{
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
   
   allergies <- as.list(allergies)
@@ -58,8 +57,8 @@ get_recipes <- function(cuisine ="N/A", diet = "N/A", time = 300, number = 100, 
   return(recipe_sample)
 }
 
-Italian_no_diet <- get_recipes("Italian", time = 50)
-Italian_Vegan <- get_recipes("Italian", "Vegan", time = 50)
+Italian_no_diet <- get_recipes("Italian", number = 3, time = 50, API = "965047400ad841198f2fd834535db269")
+Italian_Vegan <- get_recipes("Italian", "Vegan",number = 3, time = 50, API = "965047400ad841198f2fd834535db269")
 Italian_no_diet
 Italian_Vegan
 
@@ -69,7 +68,7 @@ allergy_test
 ```
 
 
-## Function to get nutrition from above function properly cleaned and transform data to wide for analysis.
+## Function to get nutrition from recipe_smaple results fropm above function properly cleaned and transformed to wide for analysis.
 
 ```{r}
 clean_nutrition <- function(df){
@@ -79,6 +78,46 @@ clean_nutrition <- function(df){
   return(df_wide)
 }
 clean_nutrition(Italian_Vegan)
+```
+
+## Wrapper function for the above two functions which takes in a list of cuisines and outputs a combined and cleaned dataset
+
+```{r}
+cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
+wrapper_cuisines <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
+  cuisine_wrap <- lapply(cuisine, get_recipes, diet, time, number, allergies, API)
+  clean_wrap <- lapply(cuisine_wrap, clean_nutrition)
+  result_wrap <- bind_rows(clean_wrap)
+  return(result_wrap)
+}
+cuisine_rec_df<- wrapper_recipes(cuisine_list, number = 5)
+cuisine_rec_df
+```
+
+## Recipe total function. Takes in same inputs as first function but returns the number of recipes matching criteria.
+
+```{r}
+get_total <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "05671e9eac144e52907ef1a7a7e37874"){
+  
+  if(diet == "N/A") {
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
+  } else{
+    url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
+  }
+  
+  allergies <- as.list(allergies)
+  allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
+  if(allergies[1] %in% allergens){
+    max = length(allergies)
+   for(i in 1:max){
+      url <- paste0(url, "&intolerances=", allergies[i])
+    }
+  }
+  recipe_list <- fromJSON(url)
+  recipe_total <- recipe_list$totalResults %>% bind_cols() %>% rename(Total = ...1)%>% mutate(Cuisine = cuisine, Diet = diet)
+  return(recipe_total)
+}
+
 ```
 
 ## Wine retrieval function
@@ -98,7 +137,6 @@ get_wine("merlot", 50)
 
 
 ```
-
 
 
 ## Get meal plan function from time frame, daily calories, diet, and allergens
@@ -170,24 +208,13 @@ wine_rec_df
 
 ## Cuisine Exploratory Data Analysis
 
+Creates a dataframe with ten different cuisines using the wrapper function then plots the results.
 ```{r}
 cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
-cuisine_rec_df <- cuisine_list %>%
-  lapply(get_recipes) %>%
-  lapply(clean_nutrition) %>%
-  bind_rows()
-
+cuisine_rec_df<- wrapper_recipes(cuisine_list, number = 100)
 cuisine_rec_df
 
-#Possible wrapper function for above
-#wrapper_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
-  #cuisine_wrap <- lapply(cuisine, get_recipes, diet, time, number, allergies, API)
- # clean_wrap <- lapply(cuisine_wrap, clean_nutrition)
-  #result_wrap <- bind_rows(clean_wrap)
- # return(result_wrap)
-#}
-#testing_wrap<- wrapper_recipes(cuisine_list, number = 5)
-#testing_wrap
+
 
 
 ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
@@ -196,7 +223,7 @@ ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) 
 
 ```
 
-```
+
 
 Wine Graphing
 Graphing price vs wine rating for different types of wine.
@@ -214,3 +241,20 @@ gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating))
 gwinerating + geom_boxplot(fill = "pink") + geom_point(aes(color = type), position = "jitter", size = .5) + theme(axis.text.x = element_text(angle = 45))
 ```
 
+Creating a contingency table for various cuisines across diets using the `get_total` function
+```{r}
+diet_list <- c("Gluten Free","Ketogenic","Vegetarian","Vegan","Paleo", "Whole30")
+
+Italian_totals <- diet_list %>% lapply(get_total, cuisine="Italian", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+American_totals <- diet_list %>% lapply(get_total, cuisine="American", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+Chinese_totals <- diet_list %>% lapply(get_total, cuisine="Chinese", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+French_totals <- diet_list %>% lapply(get_total, cuisine="French", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+Mexican_totals <- diet_list %>% lapply(get_total, cuisine="Mexican", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+Indian_totals <- diet_list %>% lapply(get_total, cuisine="Indian", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+Japanese_totals <- diet_list %>% lapply(get_total, cuisine="Japanese", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
+
+long_totals <- bind_rows(Italian_totals, American_totals, Chinese_totals, French_totals, Mexican_totals, Indian_totals, Japanese_totals )
+wide_totals <- pivot_wider(true_totals, names_from = Diet, values_from = Total)
+
+wide_totals
+```
