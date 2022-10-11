@@ -217,9 +217,9 @@ cuisine_rec_df
 
 
 
-ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
-ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
-ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
+ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Fat") + theme(axis.text.x = element_text(angle = 45))
+ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Protein") + theme(axis.text.x = element_text(angle = 45))
+ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Carbohydrates") + theme(axis.text.x = element_text(angle = 45))
 
 ```
 
@@ -230,15 +230,16 @@ Graphing price vs wine rating for different types of wine.
 ```{r}
 library(ggplot2)
 gwine <- ggplot(data = wine_rec_df, aes(x = price, y = averageRating,))
-gwine + geom_point(aes(color = type), position = "jitter", size = .5) + xlab("price") + ylab("rating") 
+gwine + geom_point(aes(color = type), position = "jitter", size = .5) + xlab("Price") + ylab("Rating") 
 
+wine_rec_df %>% group_by(type) %>% summarise(avg_price = mean(price, na.rm = TRUE), median_price = median(price, na.rm = TRUE), std_dev = sd(price, na.rm = TRUE), IQR = IQR(price, na.rm = TRUE))
 ```
 
 Graphing average rating for each type of wine
 ```{r}
 library(ggplot2)
 gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating))
-gwinerating + geom_boxplot(fill = "pink") + geom_point(aes(color = type), position = "jitter", size = .5) + theme(axis.text.x = element_text(angle = 45))
+gwinerating + geom_boxplot(fill = "grey") + geom_point(aes(color = type), position = "jitter", size = .5) +  xlab("Type of Wine") + ylab("Average Rating") + theme(axis.text.x = element_text(angle = 45))
 ```
 
 Creating a contingency table for various cuisines across diets using the `get_total` function
