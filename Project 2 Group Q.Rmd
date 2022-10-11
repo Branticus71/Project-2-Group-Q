@@ -88,7 +88,7 @@ get_wine <- function(type, price= 6000, number = 100, API = "05671e9eac144e52907
   wine_list <- fromJSON(url)
   wine_rec <- wine_list$recommendedWines %>% 
     select(id, price, averageRating, ratingCount, score) %>% 
-    mutate(type = type, averageRating = averageRating * 5)
+    mutate(type = type, averageRating = averageRating * 5, price = parse_number(price))
   return(wine_rec)
 }
 
@@ -159,7 +159,7 @@ Begins by calling the wine_rec function for 10 different popular wines then comb
 wine_list <- c("merlot", "riesling","chardonnay", "sauvignon_blanc", "pinot_noir", "cabernet_sauvignon", "moscato", "champagne", "prosecco", "zinfandel")
 wine_rec_df <-wine_list %>%
   lapply(get_wine) %>%
-  bind_rows() %>% mutate(price = parse_number(price))
+  bind_rows()
 wine_rec_df
 
 ```
@@ -176,18 +176,17 @@ cuisine_rec_df <- cuisine_list %>%
 cuisine_rec_df
 
 #Possible wrapper function for above
-wrapper_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
-  cuisine_wrap <- lapply(cuisine, get_recipes, diet, time, number, allergies, API)
-  clean_wrap <- lapply(cuisine_wrap, clean_nutrition)
-  result_wrap <- bind_rows(clean_wrap)
-  return(result_wrap)
-}
-testing_wrap<- wrapper_recipes(cuisine_list, number = 5)
-testing_wrap
+#wrapper_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
+  #cuisine_wrap <- lapply(cuisine, get_recipes, diet, time, number, allergies, API)
+ # clean_wrap <- lapply(cuisine_wrap, clean_nutrition)
+  #result_wrap <- bind_rows(clean_wrap)
+ # return(result_wrap)
+#}
+#testing_wrap<- wrapper_recipes(cuisine_list, number = 5)
+#testing_wrap
 
 
 ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter()
 ```
-
