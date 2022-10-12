@@ -1,8 +1,15 @@
 ---
 title: "Project 2"
 author: "Brant Armstrong, Lexi Field, Richard Xiao"
-date: "2022-09-28"
-output: html_document #Needs to be removed later, keeping it for now to test how the file knits.
+date: "2022-10-12"
+output: 
+  github_document: 
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    code_folding: show
+    theme: readable
+    df_print: tibble
 ---
 
 Packages needed for our functions and data exploration.
