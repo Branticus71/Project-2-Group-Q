@@ -204,6 +204,19 @@ wine_rec_df
 
 ## Cuisine Exploratory Data Analysis
 
+
+### Cuisine Boxplots
+
+We decided to have three boxplots measuring the fat, protein and carbohydrate content by cuisine, Based on our analysis, there are outliers for every cuisine for fat, protein and carbohydrates. Regarding outlier values in each of the boxplots, American and Mexican cuisine has the highest maximum outlier protein values. Chinese and Korean cuisines has the highest maximum outlier carbohydrate values. Italian and Greek cuisine has the highest maximum outlier fat content. Looking at our protein boxplots, all the cuisine, with the exception of Middle Eastern and French, has a lot of variability in protein values. American,Chinese,Greek and Japanes cuisine are positively skewed in its' distribution. Their mean protein values are higher than the protein median.Korean cuisine has the greatest median protein value. Indian cuisine has the greatest maximum value. American, Italian, and Korean cuisine's protein values are spread out due to their large IQR. Next, while looking at the carbohydrate boxplot, It also seems that the boxplots for all the cuisines has variability in carbohydrates.Italian cuisine has the highest median value. Chinese, Middle Eastern and Japanese are positively skewed.Mexican cuisine has a symmetric distribution.Chinese cuisine has the highest maximum carbohydrate value. Finally for our fat boxplots, chinese cuisine's fat distribution is on the low side. Middle Eastern cuisine is negatively skewed in its' distribution, which means mean fat values are lower than the median. French cuisine has the highest median fat value. Middle Eastern cuisine has the least amount of outliers, yet has the highest values compared to the other cuisines. American, Greek Italian, Japanese , Korean, Chinese and Mexican are positively skewed.
+
+
+### Cuisine Barplot
+
+
+Here, we constructed a barplot to see the average cooktime for each cuisine. French cuisine takes the longest time to prepare on average, followed closely by American cuisine. Indian cuisine's average preparation time is the shortest. Based on the graph, the distribution is fairly symmetric.
+
+
+
 Creates a dataframe with ten different cuisines using the wrapper function then plots the results.
 ```{r}
 cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
@@ -234,81 +247,12 @@ carb_table
 ```
 
 
-  * Based on our cuisine boxplots measuring the fat, protein and carbohydrate content, there are outliers for every cuisine. 
-   
-    +  American and Mexican cuisine has the highest maximum outlier protein values.
   
-    +  Chinese and Korean cuisines has the highest maximum outlier carbohydrate values.
-  
-    +  Italian and Greek cuisine has the highest maximum outlier fat content.
-    
-    
-  
-  * Protein Boxplot
-  
-    +  All the cuisine, with the exception of Middle Eastern and French, has a lot of variability in protein values. 
-    
-    +  American,Chinese,Greek and Japanes cuisine are positively skewed in its' distribution. Their mean protein values are higher than the protein median.
-    
-    +  Korean cuisine has the greatest median protein value.
-    
-    +  Indian cuisine has the greatest maximum value.
-    
-    +  American, Italian, and Korean cuisine's protein values are spread out due to their large IQR.
-  
-  * Carbohydrate Boxplot
-  
-    +  It seems that the boxplots for all the cuisines has variability in carbohydrates.
-    
-    +  Italian cuisine has the highest median value.
-    
-    +  Chinese, Middle Eastern and Japanese are positively skewed.
-    
-    +  Mexican cuisine has a symmetric distribution.
-    
-    +  Chinese cuisine has the highest maximum carbohydrate value.
-    
-  * Fat Boxplot
-  
-    +  Chinese cuisine's fat distribution is on the low side.
-    
-    +  Middle Eastern cuisine is negatively skewed in its' distribution, which means mean fat values are lower than the median.
-    
-    +  French cuisine has the highest median fat value.
-    
-    +  Middle Eastern cuisine has the least amount of outliers, yet has the highest values compared to the other cuisines.
-    
-    +  American, Greek Italian, Japanese , Korean, Chinese and Mexican are positively skewed.
 
-  * Cuisine Barplot
-  
-    + French cuisine takes the longest time to prepare on average, followed closely by American cuisine. Indian cuisine's average preparation time is the shortest. Based on the graph, the distribution is fairly symmetric.
     
-  
-  * MacroNutrient Table
-  
-    + American, Greek and Italian cuisine are tied with having the most amount of high fat content, followed closely by Japanese and French. Japanese, American and Greek/Mexican cuisine has the most amount of low fat content.
-    
-    + American cuisine has the highest amount of dishes with high protein followed by Indian and Italian. Mexican has the highest low protein content followed by Greek and Japnese.
-    
-  * Carbohydrate Table
-  
-    +  Italian has the highest high carbohydrate content followed by American and Mexican. Japanese has the greatest low carb content followed by Indian and Mexican.
-    
-    
-  * Cuisine Diet
-  
-    +  Mexican and Japanese has the highest gluten free, ketogenic, vegetarian, vegan, paleo and whole30 diets.
-    
-  * Wine table
-  
-    +  Cabernet_sauvignon has the highest IQR, which means that the values are widely spread out.
-    
-    +  Cabernet_sauvignon also has the greatest average price.
-    
-    +  Merlot has the lowest iqr, meaning that its' values align closely with each other.
-    
-    +  Moscato wine has the lowest average price.
+### Wine Summary Table
+
+We constructed a summary table for the wine types. Cabernet_sauvignon has the highest IQR, which means that the values are widely spread out. Cabernet_sauvignon also has the greatest average price. Merlot has the lowest iqr, meaning that its' values align closely with each other. Moscato wine has the lowest average price.
 
 Wine Graphing
 ### Wine Scatterplot 
@@ -332,6 +276,20 @@ gwinerating + geom_boxplot(fill = "grey") + geom_point(aes(color = type), positi
 
 ggplot(wine_rec_df, aes(x=averageRating, fill = type, color = type)) + geom_histogram(binwidth = 1, position="dodge") + xlab("Average Rating") + ylab("Frequency")
 ```
+
+
+
+
+### Cuisine and Macronutrient Contingency table
+
+We created a two way contingency table with cuisine and macronutrient content. For our fat values,American, Greek and Italian cuisine are tied with having the most amount of high fat content, followed closely by Japanese and French. Japanese, American and Greek/Mexican cuisine has the most amount of low fat content.American cuisine has the highest amount of dishes with high protein followed by Indian and Italian. Mexican has the highest low protein content followed by Greek and Japanese. Next, looking at carbohydrates, Italian has the highest high carbohydrate content followed by American and Mexican. Japanese has the greatest low carb content followed by Indian and Mexican.
+    
+
+
+### Cuisine and Diet Contingency table
+
+We created a two way contingency table with cuisine and diet.Mexican and Japanese has the highest gluten free, ketogenic, vegetarian, vegan, paleo and whole30 diets.
+
 
 Creating a contingency table for various cuisines across diets using the `get_total` function
 ```{r}
