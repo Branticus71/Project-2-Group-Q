@@ -236,15 +236,20 @@ carb_table
 
 
 Wine Graphing
-Graphing price vs wine rating for different types of wine.
+### Wine Scatterplot 
+In this scatterplot we are graphing price vs wine rating for different types of wine. We wanted to see if we could identify a trend of high price relating to higher rating, so we put together this plot using the wine recommendation data frame (wine_rec_df). The different colored points represent different wine types. As shown by the scatterplot, majority of the wines in the data frame cost less than fifty dollars, and only a few of the wines cost more than one hundred dollars. Before analyzing this data, I assumed that more expensive wines would receive higher average ratings. After creating this scatterplot, we can see that wines under fifty dollars have a wide range of average ratings, with every wine type being represented. Even some rather cheap wines have some of the highest rating points on the plot. Wines that cost between fifty and one hundred dollars had some very highly rated wines, many of which were cabernet savignon wines. This price category also some wines with average ratings below 4.5. Surprisingly, none of the wines that cost between one hundred and one hundred and fifty dollars had an average rating above 4.5. I found it interesting that the most expensive wine in the data frame did not have a score of 5 or above, but the second most expensive one did. Overall, this analysis showed that there is not a strong correlation between the price of a wine and its average rating.
 ```{r}
 library(ggplot2)
 gwine <- ggplot(data = wine_rec_df, aes(x = price, y = averageRating,))
 gwine + geom_point(aes(color = type), position = "jitter", size = .5) + xlab("Price") + ylab("Rating") 
 wine_rec_df %>% group_by(type) %>% summarise(avg_price = mean(price, na.rm = TRUE), median_price = median(price, na.rm = TRUE), std_dev = sd(price, na.rm = TRUE), IQR = IQR(price, na.rm = TRUE))
 ```
+### Wine Boxplot 
+Here, we wanted to look at the average rating for each type of wine in the API. A box plot was created using our wine recommendation dataframe (wine_rec_df) to show the quartiles in the average rating column for each type of wine in the data frame. As shown in the plot, there were only a few champagne wines in the data frame, so the box is small. Prosecco had the second smallest IQR box because there are only a few prosecco values in the data. Prosecco is also the only wine with an obvious upper outlier. Chardonnay and zinfandel have the larges IQRs, but chardonnay has a lower median rating than the zinfandel. The cabernet savignon and the zinfandel have the highest median average ratings but it looks like all of the types of wine other than champagne have at least one value at 5 or above. 
 
-Graphing average rating for each type of wine
+### Wine Histogram
+We were curious about how frequently the different wines had cetain average scores. This histogram shows the frequency that the different wines in the data frame were scored at different average ratings. Champagne did not show any comparison because the wines scored around a 3.6 average rating 2 times because as shown in the boxplot, there were only 2 champagne wines in the data frame. Most of the wines scored lower (between 3.5 and 4.5) more frequently than they scored higher (above 4.5). Moscato scored almost evenly with around 9 average ratings of 3.9 and around 8 average ratings of 4.9. The cabernet sauvignon did not follow this trend since it scored just above a 3.5 around 17 times and scored just above a 4.5 around 24 times. Zinfandel also scored highly more frequently with around 23 average scores of 5.4 and around 13 average scores of 4.4. The largest difference in scoring frequencies appeared in the Riesling with over 45 occurrences of rating scores of 4.3 and 14 scores of 5.3. The amount of each wine type also plays a large affect in the outcome histogram because with more variables of a certain type comes more frequency points. 
+
 ```{r}
 library(ggplot2)
 gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating))
