@@ -250,8 +250,7 @@ library(ggplot2)
 gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating))
 gwinerating + geom_boxplot(fill = "grey") + geom_point(aes(color = type), position = "jitter", size = .5) +  xlab("Type of Wine") + ylab("Average Rating") + theme(axis.text.x = element_text(angle = 45))
 
-ggplot(wine_rec_df, aes(x=averageRating, color=type)) + geom_histogram(binwidth = 1, fill = "white", position="dodge") + xlab("Average Rating") + ylab("Frequency")
-ggplot(wine_rec_df, aes(x=score)) + geom_density(adjust = 0.5, alpha=0.5, aes(fill = type), position="stack")
+ggplot(wine_rec_df, aes(x=averageRating, fill = type, color = type)) + geom_histogram(binwidth = 1, position="dodge") + xlab("Average Rating") + ylab("Frequency")
 ```
 
 Creating a contingency table for various cuisines across diets using the `get_total` function
