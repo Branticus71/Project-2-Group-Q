@@ -3,155 +3,170 @@ title: "Project 2"
 author: "Brant Armstrong, Lexi Field, Richard Xiao"
 date: "2022-10-12"
 output: 
-  github_document: 
+  html_document: 
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float: true
-    code_folding: show
     theme: readable
     df_print: tibble
 ---
 
-Packages needed for our functions and data exploration.
+# **Purpose**
+
+This github page will show the general methods used to create functions that can call the Spoonacular API then clean the results before delving into some exploratory data analysis using primarily tables and graphs.
+
+# **Packages needed for our functions and data exploration**
 ```{r, message=FALSE}
 library(tidyverse)
-library(httr)
 library(jsonlite)
-#Brant's api keys ?apiKey=965047400ad841198f2fd834535db269 + ?apiKey=05671e9eac144e52907ef1a7a7e37874 +?apiKey=ea88d9f6e2bc470bbddeb6db653f214b
 ```
 
-Ideas for functions and analysis:
-- Takes in a cuisine, diet, max time to cook, and number of recipes to return matching recipes use sort= random as default. 
-  -Analysis could be comparing time to cook across different cuisines and diets. Plot average time to cook for each cuisine/diet. 
-- Takes the ID's from the above function and returns nutrition information data as well as the nutrition label widget for a couple recipes.
-  -Analysis could be breakdown of micro or macro nutrients by cuisine/diet. So fat content for Asian vs Mediterranean diet.
-- Takes in a time frame, calories, diet, and any exclusions and returns a meal plan for that time frame.
-  -Compare macronutrients for each diet choice.
-- Takes the meal plan recipe ID's and gets the price per day.
-  -Compare the prices for different diet meal plans.
-- Takes in the meal plan and a selected day and returns the instructions for each meal that day.
-- Takes in a type of wine, price, min rating, and number then returns a number of recommended wines.
-  -Compare relationship of price and rating
-- Takes in ingredients, number of recipes, and returns possible recipes.
+# **Functions for Calling the Spoonacular API**
 
-# **Functions**
+## Recipes by Cuisine Function
 
+The first function we created is `get_recipes` which returns a list containing recipes matching your search criteria along with their nutrition information. The inputs are as follows:
 
-## Recipes for cuisine, diet, time to cook, a list of allergies.
-
+  - `cuisine`: a string who can take on any values found [here.](https://spoonacular.com/food-api/docs#Cuisines)
+  - `diet` : a string who can take on any values found [here.](https://spoonacular.com/food-api/docs#Diets)
+  - `time` : the max number of minutes a recipe can take to prepare.
+  - `number` : the maximum number of recipes to be returned; can be any number from 1 to 100.
+  - `allergies` : a list that can contain any strings that match the values [here.](https://spoonacular.com/food-api/docs#Intolerances)
+  - `API` : a string that matches the user's API key.
+  
 ```{r}
 get_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "05671e9eac144e52907ef1a7a7e37874"){
-  
+  #Checks diet and attaches it to url if not equal to the default of "N/A" while also attaching the rest of the inputs to the url
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
   } else{
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
-  
+  #Changes allergies to a list and checks it against the list of accepted allergies and attaches it if valid.
   allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
+    #Attaching each allergy to the url.
     max = length(allergies)
    for(i in 1:max){
       url <- paste0(url, "&intolerances=", allergies[i])
     }
   }
-  
+  #Getting the relevant variables and adding two more for cuisine and diet matching the input.
   var_names <- c("pricePerServing", "id", "title", "readyInMinutes", "nutrition", "servings")
   recipe_list <- fromJSON(url)
   recipe_sample <- recipe_list$results %>% select(var_names) %>% mutate(Cuisine = cuisine, Diet = diet)
   return(recipe_sample)
 }
-Italian_no_diet <- get_recipes("Italian", number = 3, time = 50, API = "965047400ad841198f2fd834535db269")
-Italian_Vegan <- get_recipes("Italian", "Vegan",number = 3, time = 50, API = "965047400ad841198f2fd834535db269")
-Italian_no_diet
-Italian_Vegan
-allergy_list <- c("Gluten", "Dairy", "Peanut", "Tree Nut", "Seafood", "Shellfish")
-allergy_test <- get_recipes("Italian", time = 50, allergies = allergy_list)
-allergy_test
 ```
 
+## Cleaning Function for Recipes by Cuisine
 
-## Function to get nutrition from recipe_smaple results fropm above function properly cleaned and transformed to wide for analysis.
-
+Our `get_recipes` function has a small issue due to the nature of the data return where all the nutrition information is nested as a dataframe within the results. The `clean_nutrition` function takes the results from `get_recipes` and returns a clean dataframe with all nutrition information properly attached to each recipe observation.
 ```{r}
 clean_nutrition <- function(df){
   var_list <- c("Cuisine", "Diet", "id", "title","pricePerServing", "readyInMinutes", "name", "amount", "unit", "servings" )
+  #Un-nesting the nutrition dataframe then un-nesting the nutrients dataframe from nutrition then taking only wants variables.
   df_long <- df %>% unnest(nutrition) %>% unnest(nutrients) %>% select(var_list)
+  #Pivoting the dataframe so that each recipe is on a single row.
   df_wide <- df_long %>% pivot_wider(names_from = name, values_from = c(amount, unit ))
   return(df_wide)
 }
-clean_nutrition(Italian_Vegan)
 ```
 
-## Wrapper function for the above two functions which takes in a list of cuisines and outputs a combined and cleaned dataset
+## Wrapper Function for the Above Functions
 
+Next, we created a wrapper function that can take in a list of cuisines along with any relevant parameters then calls the `get_recipes` and `clean_nutrition` functions for each supplied `cuisine` value and merges the results into a single dataframe.
 ```{r}
-cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
-wrapper_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "ea88d9f6e2bc470bbddeb6db653f214b" ){
+wrapper_recipes <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "965047400ad841198f2fd834535db269 " ){
+  #Applying get_recipes to each cuisine in the supplied list
   cuisine_wrap <- lapply(cuisine, get_recipes, diet, time, number, allergies, API)
+  #Applying clean_nutrition to the list of outputs from previous function.
   clean_wrap <- lapply(cuisine_wrap, clean_nutrition)
+  #Bindind all the list elements together into a single dataframe.
   result_wrap <- bind_rows(clean_wrap)
   return(result_wrap)
 }
-cuisine_rec_df<- wrapper_recipes(cuisine_list, number = 100)
-cuisine_rec_df
 ```
 
-## Recipe total function. Takes in same inputs as first function but returns the number of recipes matching criteria.
+## Matching Recipe Total Function
 
+The following function `get_total` is a modified version of `get_recipes` but instead of returning specific recipes that match our results it instead gives us the total number of recipes in the Spoonacular database that match our criteria. 
 ```{r}
 get_total <- function(cuisine, diet = "N/A", time = 300, number = 100, allergies = "None", API = "05671e9eac144e52907ef1a7a7e37874"){
-  
+  #Checks diet and attaches it to url if not equal to the default of "N/A" while also attaching the rest of the inputs to the url
   if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine,"&maxReadyTime=", time, "&number=", number, "&sort=random&addRecipeNutrition=true")
   } else{
     url <- paste0("https://api.spoonacular.com/recipes/complexSearch?apiKey=", API, "&cuisine=", cuisine, "&diet=", diet,"&maxReadyTime=", time,"&number=", number, "&sort=random&addRecipeNutrition=true")
   }
-  
+  #Changes allergies to a list and checks it against the list of accepted allergies and attaches it if valid.
   allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
+    #Attaching each allergy to the url.
     max = length(allergies)
    for(i in 1:max){
       url <- paste0(url, "&intolerances=", allergies[i])
     }
   }
   recipe_list <- fromJSON(url)
+  #Taking instead the totalResults output and renaming the default created "...1" column to Total
+  #Still creates a variable for cuisine and diet based on inputs
   recipe_total <- recipe_list$totalResults %>% bind_cols() %>% rename(Total = ...1)%>% mutate(Cuisine = cuisine, Diet = diet)
   return(recipe_total)
 }
 ```
 
-## Wine retrieval function
+## Wine Recommendation Function
+
+The `get_wine` function returns recommended wines based upon your search criteria. The inputs are as follows:
+
+  - `type` : a string for the kind of wine wanted that can take values found [here.](https://spoonacular.com/food-api/docs#Wine-Guide)
+  - `price` : the maximum price for wine.
+  - `number` : the maximum number of wines to return; can be any number from 1 to 100.
+  - `API` : a string that matches the user's API key.
+  
 ```{r}
-get_wine <- function(type, price= 6000, number = 100, API = "05671e9eac144e52907ef1a7a7e37874"){
+get_wine <- function(type, price = 6000, number = 100, API = "2ab6d276479a4f6eb30b1b7ab0524e6d"){
+  #Simply adds each input to the url
   url <- paste0("https://api.spoonacular.com/food/wine/recommendation?apiKey=", API, "&wine=", type, "&maxPrice=", price, "&number=", number)
   wine_list <- fromJSON(url)
+  #Selecting only the results wanted
+  #Grabbing the wanted variables
+  #Converting averageRating to to a 0-5 scale and turning price into a numeric variable
   wine_rec <- wine_list$recommendedWines %>% 
     select(id, price, averageRating, ratingCount, score) %>% 
     mutate(type = type, averageRating = averageRating * 5, price = parse_number(price))
   return(wine_rec)
 }
-get_wine("merlot", 50)
 ```
 
 
-## Get meal plan function from time frame, daily calories, diet, and allergens
+## Meal Plan Function
 
+the `get_plan` function returns a list containing the meal plan based upon your search criteria along with the macro nutrients for each day. The inputs are as follows:
+
+  - `time` : a string that can be either "day" or "week"
+  - `calories` : a number for your daily caloric goal
+  - `diet` : a string who can take on any values found [here.](https://spoonacular.com/food-api/docs#Diets)
+  - `allergies` : a list that can contain any strings that match the values [here.](https://spoonacular.com/food-api/docs#Intolerances)
+  - `API` : a string that matches the user's API key.
+  
 ```{r}
 #Outputs a list containing multiple dataframes. Should combine to one dataframe.
 get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", API = "965047400ad841198f2fd834535db269"){
-  
+    #Checks diet and attaches it to url if not equal to the default of "N/A" while also attaching the rest of the inputs to the url
     if(diet == "N/A") {
     url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time,"&targetCalories=", calories)
   } else{
     url <- paste0("https://api.spoonacular.com/mealplanner/generate?apiKey=", API, "&timeFrame=", time, "&diet=", diet,"&targetCalories=", calories)
   }
-  
+  #Changes allergies to a list and checks it against the list of accepted allergies and attaches it if valid.
   allergies <- as.list(allergies)
   allergens <- c("Dairy", "Egg", "Gluten", "Grain", "Peanut", "Seafood", "Sesame", "Shellfish", "Soy", "Sulfite", "Tree Nut", "Wheat")
   if(allergies[1] %in% allergens){
+   #Attaching each allergy to the url
    max = length(allergies)
    for(i in 1:max){
       url <- paste0(url, "&exclude=", allergies[i])
@@ -159,156 +174,227 @@ get_plan <- function(time = "week", calories, diet = "N/A", allergies = "None", 
   }
   meal_plan <- fromJSON(url)
   
+  #Checking if time is week or day and returning the matching output
   if(time == "week"){
+    #Combining all the separate meal lists to one dataframe
     meal_df <- bind_rows(meal_plan$week$monday$meals, meal_plan$week$tuesday$meals, meal_plan$week$wednesday$meals, meal_plan$week$thursday$meals, meal_plan$week$friday$meals, meal_plan$week$saturday$meals, meal_plan$week$sunday$meals)
+    #Combining all the separate nutrients lists into one dataframe and added a column for what day they correspond to
     days <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     nutrition_df <- bind_rows(meal_plan$week$monday$nutrients, meal_plan$week$tuesday$nutrients, meal_plan$week$wednesday$nutrients, meal_plan$week$thursday$nutrients, meal_plan$week$friday$nutrients, meal_plan$week$saturday$nutrients, meal_plan$week$sunday$nutrients) 
     nutrition_df$Day <- days
   } else {
+    #For when the selection is day just gives a single set of meals and nutrients.
     meal_df <- bind_rows(meal_plan$meals)
     nutrition_df <- bind_rows(meal_plan$nutrients)
   }
+  #Returns a list: one element is all the meals for the week/day and the other element is the macro nutrients for each day.
   return(list(meals = meal_df, nutrition = nutrition_df))
 }
-get_plan(calories = 2000, allergies = "Soy")
 ```
 
+## Recipes by Macros
 
-```{r}
-getmacros <- function(mincalories = 0, maxcalories = 2000, minProtein = 0, maxProtein = 700, number = 20, random = TRUE,API = "ca0e515fe1024fd489a76a3d88fcb775"){
+The `get_macros` function returns a dataframe of recipes matching your search criteria but uses nutrition information distinguishing it from `get_recipes`. The inputs are as follows:
+
+  - `min_calories` : the minimum calories per recipe.
+  - `max_calories` : the maximum calories per recipe.
+  - `min_protein` : the minimum grams of protein per recipe.
+  - `max_protein` : the maximum grams of protein per recipe.
+  - `number` : the maximum number of recipes to return; can be any number from 1 to 100.
+  - `random` : TRUE or FALSE to return a random sample of recipes matching your criteria.
+  - `API` : a string that matches the user's API key.
   
-    url <- paste0("https://api.spoonacular.com/recipes/findByNutrients?apiKey=", API, "&minCalories=", mincalories, "&maxCalories=", maxcalories, "&minProtein=", minProtein, "&maxProtein=",maxProtein, "&number=", number, "&random=", random)
+```{r}
+get_macros <- function(min_calories = 0, max_calories = 2000, min_protein = 0, max_protein = 700, number = 20, random = TRUE,API = "ca0e515fe1024fd489a76a3d88fcb775"){
+    #adds all the inputs to the url
+    url <- paste0("https://api.spoonacular.com/recipes/findByNutrients?apiKey=", API, "&minCalories=", min_calories, "&maxCalories=", max_calories, "&minProtein=", min_protein, "&maxProtein=",max_protein, "&number=", number, "&random=", random)
     calories_list <- fromJSON(url)
-    new_calories_list <- calories_list%>%select(calories,protein,fat,carbs)
-  return(calories_list)
+    #selects only the columns we are interested in
+    new_calories_list <- calories_list%>%select(id, title, calories,protein,fat,carbs)
+  return(new_calories_list)
 }
-getmacros(20,7000,11,800,30)
 ```
 
-# Ideas for Exploratory Data Analysis
-Contingency table: Cuisine as row, diet as columns, number of recipes as values
-  -Need to modify first function to return a totalResults dataframe as well
-Numerical Summaries: price at different wine categories - Mean, median, standard deviation 
-  -Just set max price to something ridiculously high to get the largest dataset possible
-Bar plot: average time to cook for each cuisine
-Histogram: Average rating for wine, each box of width 1, so 0-1, 1-2, 2-3, 3-4, 4-5
-Box plot: Fat/Carb/Protein content by cuisine
-Scatter plot: Price vs rating for wine
+# **Exploratory Data Analysis**
 
+## Cuisine Analysis
 
+### Function Calls
 
+We begin by calling `wrapper_recipes` with a list of ten popular cuisines to create a dataframe then calling the `get_total` function for seven popular cuisines across six common diets and combining them. Ideally, we would have used the same ten cuisines for each but API quota limitations forced us to reduce the size for our `get_total` calls.
+```{r, warning=FALSE, message=FALSE, cache = TRUE}
+cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
+cuisine_rec_df <- wrapper_recipes(cuisine_list, number = 100, API = "965047400ad841198f2fd834535db269")
 
-## Wine Exploratory Data Analysis
+diet_list <- c("Gluten Free","Ketogenic","Vegetarian","Vegan","Paleo", "Whole30")
+Italian_totals <- diet_list %>% lapply(get_total, cuisine="Italian", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+American_totals <- diet_list %>% lapply(get_total, cuisine="American", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+Chinese_totals <- diet_list %>% lapply(get_total, cuisine="Chinese", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+French_totals <- diet_list %>% lapply(get_total, cuisine="French", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+Mexican_totals <- diet_list %>% lapply(get_total, cuisine="Mexican", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+Indian_totals <- diet_list %>% lapply(get_total, cuisine="Indian", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+Japanese_totals <- diet_list %>% lapply(get_total, cuisine="Japanese", API ="00f6eb3644b14db584ee4dd635b6dc77" ) %>% bind_rows()
+true_totals <- bind_rows(Italian_totals, American_totals, Chinese_totals, French_totals, Mexican_totals, Indian_totals, Japanese_totals )
+```
 
-Begins by calling the wine_rec function for 10 different popular wines then combines the results into one dataframe for analysis.
+### Contingency Tables
+
+In preparation for these tables we created three categorical variables: `fat_content`, `protein_content`, and `carb_content` which are categorized as follows:
+
+  - Content >= 30 grams -> `"High"`
+  - Content >= 15 grams -> `"Medium"`
+  - Content >= 30 grams -> `"Low"`
+  
+We then created three contingency tables showing the amount of recipes that fall into each category for each `cuisine`.  
 ```{r}
+fat_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Fat) %>% mutate(fat_content = if_else(amount_Fat >= 30, "High", if_else(amount_Fat >= 15, "Medium", "Low")))
+protein_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Protein) %>% mutate(protein_content = if_else(amount_Protein >= 30,      "High", if_else(amount_Protein >= 15, "Medium", "Low")))
+carb_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Carbohydrates) %>% mutate(carb_content = if_else(amount_Carbohydrates >= 30, "High", if_else(amount_Carbohydrates >= 15, "Medium", "Low")))
+fat_table <- table(fat_content_df$Cuisine, fat_content_df$fat_content)
+protein_table <- table(protein_content_df$Cuisine, protein_content_df$protein_content)
+carb_table <- table(carb_content_df$Cuisine, carb_content_df$carb_content)
+names(dimnames(fat_table)) <- c("Cuisine", "Fat Content")
+names(dimnames(protein_table)) <- c("Cuisine", "Protein Content")
+names(dimnames(carb_table)) <- c("Cuisine", "Carbohydrate Content")
+```
+
+
+```{r}
+fat_table
+```
+As evidenced by the tables, there is not an equal number of observations for each cuisine. It seems that the Spoonacular API is lacking when it comes to Korean and Middle Eastern recipes in particular. Furthermore, focusing on the fat content table we see that most recipes fall into the `"Low"` category. It's difficult to say if this is due to the innate characteristics of each `cuisine` or if Spoonacular has a selection method for adding recipes to its API that tries to filter out fatty recipes. Of the `cuisine` categories with a significant number of observations, Italian and French `cuisine` stand out as having a large proportion of their recipes fall into the `"High"` or `"Medium"` category while Chinese `cuisine` is more concentrated in the `"Low"` category relative to other options. 
+
+
+```{r}
+protein_table
+```
+Next, for protein we see a similar over representation of the `"Low"` category. If one was interested in trying to prioritize recipes with a fair amount of protein then they would be best served by looking into American, Indian, and Italian recipes while minimizing Greek and Mexican recipes.
+
+```{r}
+carb_table
+```
+
+Finally, for carbohydrates the vast majority of recipes fall into the `"High"` category. This is not particularly surprising as in most cultures carbohydrates make up a majority of their caloric intake. Italian cuisine stands out as an outlier with very large proportion of their recipes falling into the `"High"` category which is no surprise due to their penchant for pasta and bread.
+
+The contingency table for `cuisine` and `diet` was created by simply pivotting the combined data from our `get_total` function calls. 
+```{r}
+wide_totals <- pivot_wider(true_totals, names_from = Diet, values_from = Total)
+wide_totals
+```
+The results of this table lead us to believe that there may be something wrong with the API when it comes to diets and their interaction with Mexican and Japanese `cuisine`. They both have the exact same values for each column and are massively larger than any other category. We verified the functions were called properly and the results remained so if there is an issue causing this we believe it to be on the API side as all the others returned normal results and the only thing changed between them is the `cuisine` inputs which match the guide on the website [here.](https://spoonacular.com/food-api/docs#Cuisines). 
+
+
+### Graphs and Plots
+
+We begin by creating separate box plots for the grams of fat, carbohydrates, and protein for each `cuisine`.
+```{r}
+ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + 
+  geom_boxplot(fill="grey") + 
+  geom_jitter() +
+  ylab("Grams of Fat") + 
+  theme(axis.text.x = element_text(angle = 45)) +
+  ggtitle("Boxplot for Grams of Fat by Cuisine")
+```
+Here we can see that almost every `cuisine` has a fair quantity of outliers in fat content outside of the Korean and Indian recipes. With Middle Eastern `cuisine` having the most extreme outliers in terms of magnitude. Also, mirroring the results of our contingency tables, we see that French and Italian `cuisine` have the highest median fat content while Chinese `cuisine` has the lowest median.
+
+
+```{r}
+ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + 
+  geom_boxplot(fill="grey") + 
+  geom_jitter() + 
+  ylab("Grams of Protein") + 
+  theme(axis.text.x = element_text(angle = 45)) +
+  ggtitle("Boxplot for Grams of Protein by Cuisine")
+```
+Here we see a similar story in terms of outliers with most `cuisine` options having a fair number of recipes that have significantly more protein content than the median. This time French and Korean `cuisine` have the least observations falling into that outlier category. Meanwhile, American and Mexican food have the most extreme outliers in terms of magnitude while French has the tightest distribution of protein content. Additionally, Korean and American `cuisine` standout as having significantly a larger IQR relative to other categories.
+
+```{r}
+ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) +
+  geom_boxplot(fill="grey") + 
+  geom_jitter() + 
+  ylab("Grams of Carbohydrates") + 
+  theme(axis.text.x = element_text(angle = 45)) +
+  ggtitle("Boxplot for Grams of Carbohydrates by Cuisine")
+```
+Immediately, it becomes clear that Chinese and Korean `cuisine` have the most extreme outliers in terms of magnitude when it comes to carbohydrate content. Of all the categories, Italian stands out as having a fairly tight and symmetric distribution of carbohydrate content compared to the others with American or Mexican `cuisine` being the closest competitors in that regard. 
+
+Finally, we constructed a bar plot by grouping our data by `cuisine` then creating a variable for the average time to prepare for each `cuisine`.
+
+```{r}
+cuisine_bar <- cuisine_rec_df %>% group_by(Cuisine) %>% summarize(Average_Time = mean(readyInMinutes))
+ggplot(cuisine_bar, aes(x = Cuisine, y = Average_Time, fill = Cuisine)) + 
+  geom_bar(stat = "Identity")  + 
+  ylab("Average Time to Prepare") + 
+  theme(axis.text.x = element_text(angle = 45)) +
+  ggtitle("Average Time to Prepare by Cuisine")
+```
+French `cuisine` takes the longest time to prepare on average, followed closely by American and Greek `Cuisine`. Indian `cuisine` has the shortest average preparation but is still fairly close to the others. Based on the graph, the average time to prepare does not seem to vary greatly across different values of `cuisine`.
+
+## Wine Analysis
+
+To Begin we called the `get_wine` function for 10 different popular wines then combined the results into one dataframe for analysis.
+```{r, cache = TRUE}
 wine_list <- c("merlot", "riesling","chardonnay", "sauvignon_blanc", "pinot_noir", "cabernet_sauvignon", "moscato", "champagne", "prosecco", "zinfandel")
 wine_rec_df <-wine_list %>%
   lapply(get_wine) %>%
   bind_rows()
-wine_rec_df
 ```
-
-## Cuisine Exploratory Data Analysis
-
-
-### Cuisine Boxplots
-
-We decided to have three boxplots measuring the fat, protein and carbohydrate content by cuisine, Based on our analysis, there are outliers for every cuisine for fat, protein and carbohydrates. Regarding outlier values in each of the boxplots, American and Mexican cuisine has the highest maximum outlier protein values. Chinese and Korean cuisines has the highest maximum outlier carbohydrate values. Italian and Greek cuisine has the highest maximum outlier fat content. Looking at our protein boxplots, all the cuisine, with the exception of Middle Eastern and French, has a lot of variability in protein values. American,Chinese,Greek and Japanes cuisine are positively skewed in its' distribution. Their mean protein values are higher than the protein median.Korean cuisine has the greatest median protein value. Indian cuisine has the greatest maximum value. American, Italian, and Korean cuisine's protein values are spread out due to their large IQR. Next, while looking at the carbohydrate boxplot, It also seems that the boxplots for all the cuisines has variability in carbohydrates.Italian cuisine has the highest median value. Chinese, Middle Eastern and Japanese are positively skewed.Mexican cuisine has a symmetric distribution.Chinese cuisine has the highest maximum carbohydrate value. Finally for our fat boxplots, chinese cuisine's fat distribution is on the low side. Middle Eastern cuisine is negatively skewed in its' distribution, which means mean fat values are lower than the median. French cuisine has the highest median fat value. Middle Eastern cuisine has the least amount of outliers, yet has the highest values compared to the other cuisines. American, Greek Italian, Japanese , Korean, Chinese and Mexican are positively skewed.
-
-
-### Cuisine Barplot
-
-
-Here, we constructed a barplot to see the average cooktime for each cuisine. French cuisine takes the longest time to prepare on average, followed closely by American cuisine. Indian cuisine's average preparation time is the shortest. Based on the graph, the distribution is fairly symmetric.
-
-
-
-Creates a dataframe with ten different cuisines using the wrapper function then plots the results.
-```{r}
-cuisine_list <- c("American", "Chinese", "French", "Greek", "Indian", "Italian","Japanese", "Mexican", "Middle Eastern", "Korean")
-cuisine_rec_df <- wrapper_recipes(cuisine_list, number = 100)
-cuisine_rec_df
-
-#Plots for cuisine
-ggplot(cuisine_rec_df, aes(x= Cuisine, y=amount_Fat, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Fat") + theme(axis.text.x = element_text(angle = 45))
-ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Protein, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Protein") + theme(axis.text.x = element_text(angle = 45))
-ggplot(cuisine_rec_df, aes(x = Cuisine, y=amount_Carbohydrates, col = Cuisine)) + geom_boxplot(fill="grey") + geom_jitter() + ylab("Grams of Carbohydrates") + theme(axis.text.x = element_text(angle = 45))
-
-cuisine_bar <- cuisine_rec_df %>% group_by(Cuisine) %>% summarize(Average_Time = mean(readyInMinutes))
-ggplot(cuisine_bar, aes(x = Cuisine, y = Average_Time)) + geom_bar(stat = "Identity")  + ylab("Average Time to Prepare") + theme(axis.text.x = element_text(angle = 45))
-
-#Tables for cuisine
-fat_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Fat) %>% mutate(fat_Content = if_else(amount_Fat >= 30, "High", if_else(amount_Fat >= 15, "Medium", "Low")))
-protein_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Protein) %>% mutate(protein_Content = if_else(amount_Protein >= 30,      "High", if_else(amount_Protein >= 15, "Medium", "Low")))
-carb_content_df <- cuisine_rec_df %>% select(Cuisine, amount_Carbohydrates) %>% mutate(carb_Content = if_else(amount_Carbohydrates >= 30, "High", if_else(amount_Carbohydrates >= 15, "Medium", "Low")))
-fat_table <- table(fat_content_df$Cuisine, fat_content_df$fat_Content)
-protein_table <- table(protein_content_df$Cuisine, protein_content_df$protein_Content)
-carb_table <- table(carb_content_df$Cuisine, carb_content_df$carb_Content)
-names(dimnames(fat_table)) <- c("Cuisine", "Fat Content")
-names(dimnames(protein_table)) <- c("Cuisine", "Protein Content")
-names(dimnames(carb_table)) <- c("Cuisine", "Carbohydrate Content")
-fat_table
-protein_table
-carb_table
-```
-
-
-  
-
     
-### Wine Summary Table
+### Wine Summary Statistics Table
 
-We constructed a summary table for the wine types. Cabernet_sauvignon has the highest IQR, which means that the values are widely spread out. Cabernet_sauvignon also has the greatest average price. Merlot has the lowest iqr, meaning that its' values align closely with each other. Moscato wine has the lowest average price.
-
-Wine Graphing
-### Wine Scatterplot 
-In this scatterplot we are graphing price vs wine rating for different types of wine. We wanted to see if we could identify a trend of high price relating to higher rating, so we put together this plot using the wine recommendation data frame (wine_rec_df). The different colored points represent different wine types. As shown by the scatterplot, majority of the wines in the data frame cost less than fifty dollars, and only a few of the wines cost more than one hundred dollars. Before analyzing this data, I assumed that more expensive wines would receive higher average ratings. After creating this scatterplot, we can see that wines under fifty dollars have a wide range of average ratings, with every wine type being represented. Even some rather cheap wines have some of the highest rating points on the plot. Wines that cost between fifty and one hundred dollars had some very highly rated wines, many of which were cabernet savignon wines. This price category also some wines with average ratings below 4.5. Surprisingly, none of the wines that cost between one hundred and one hundred and fifty dollars had an average rating above 4.5. I found it interesting that the most expensive wine in the data frame did not have a score of 5 or above, but the second most expensive one did. Overall, this analysis showed that there is not a strong correlation between the price of a wine and its average rating.
+We began by creating a table of summary statistics for `price` at each `type` of wine.
 ```{r}
-library(ggplot2)
-gwine <- ggplot(data = wine_rec_df, aes(x = price, y = averageRating,))
-gwine + geom_point(aes(color = type), position = "jitter", size = .5) + xlab("Price") + ylab("Rating") 
 wine_rec_df %>% group_by(type) %>% summarise(avg_price = mean(price, na.rm = TRUE), median_price = median(price, na.rm = TRUE), std_dev = sd(price, na.rm = TRUE), IQR = IQR(price, na.rm = TRUE))
 ```
+
+Cabernet Sauvignon stands out as the `type` of wine that has the highest average `price` by a significant margin along with the largest standard deviation and IQR which tells us there is a large spread in possible values. Moscato has the lowest standard deviation and IQR so along with a median close to the average `price` so it should have a fairly tight distribution with Sauvignon Blanc being close behind. Also noteworthy is that the average `price` for every `type` is larger than their median.
+
+### Wine Scatterplot 
+```{r, warning=FALSE, message = FALSE}
+gwine <- ggplot(data = wine_rec_df, aes(x = price, y = averageRating,))
+gwine + geom_point(aes(color = type), position = "jitter", size = .5) + 
+  xlab("Price") + 
+  ylab("Average Rating") +
+  ggtitle("Scatterplot for Average Rating Versus Price for Wine") +
+  geom_smooth(method = lm)
+```
+Initially, we assumed that we would see a fairly strong relationship between the average rating of a wine and its `price`. However, while our graph does suggest that there is a relationship based upon our prediction line, it looks like this could be primarily due to a few outliers and is not actually effective in predicting rating for most of our data. As can clearly be seen, there is a lot of variance in that zero to fifty dollar range that just looking at the graph does not suggest much of a relationship. Therefore we decided to filter our dataset to only wines under fifty dollars then rerun our graph.
+```{r, message = FALSE}
+filtered_wine_rec_df <- wine_rec_df %>% filter(price < 50)
+
+gwine <- ggplot(data = filtered_wine_rec_df, aes(x = price, y = averageRating,))
+gwine + geom_point(aes(color = type), position = "jitter", size = .5) + 
+  xlab("Price") + 
+  ylab("Average Rating") +
+  ggtitle("Scatterplot for Average Rating Versus Price for Wine where `Price` < $50") +
+  geom_smooth(method = lm)
+```
+As you can see, the results stayed roughly the same but the slope of our line seems to decrease suggesting a weaker relationship between average rating and `pric`. Once again, the relationship is not nearly as strong as we anticipated. This could be due to the fact that all of our wines are in the 3.5 to 5.0 range. It's possible that Spoonacular is intentionally removing poorly rated wines and is therefore giving us a sample that is not truly representative of the population and obscuring the true relationship if there is one. Or simply, there might not really be a strong relationship between the `price` of a wine and it's average rating.
+
 ### Wine Boxplot 
-Here, we wanted to look at the average rating for each type of wine in the API. A box plot was created using our wine recommendation dataframe (wine_rec_df) to show the quartiles in the average rating column for each type of wine in the data frame. As shown in the plot, there were only a few champagne wines in the data frame, so the box is small. Prosecco had the second smallest IQR box because there are only a few prosecco values in the data. Prosecco is also the only wine with an obvious upper outlier. Chardonnay and zinfandel have the larges IQRs, but chardonnay has a lower median rating than the zinfandel. The cabernet savignon and the zinfandel have the highest median average ratings but it looks like all of the types of wine other than champagne have at least one value at 5 or above. 
+
+Next, we wanted to look at the difference in average rating across the different categories of wine so we created a box plot.
+```{r}
+gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating, color = type))
+gwinerating + geom_boxplot(fill = "grey") + 
+  geom_point(aes(color = type), position = "jitter", size = 1) +  
+  xlab("Type of Wine") + 
+  ylab("Average Rating") + 
+  theme(axis.text.x = element_text(angle = 45)) +
+  ggtitle("Box Plot for Average Rating by Type")
+```
+As shown in the plot, there were only a few champagne wines in the data frame with average ratings close together so the box is small. Zinfandel and Cabernet Sauvignon have the highest medians suggesting that maybe critics favor that type of wine. Cabernet Sauvignon and Prosecco have the largest outliers in terms of magnitude with their most extreme observation being a fair distance away from the median with Cabernet's being lower and Prosecco's being higher. In addition, all wines outside of Champagne have at least one observation with an average rating of 5.
+
 
 ### Wine Histogram
-We were curious about how frequently the different wines had cetain average scores. This histogram shows the frequency that the different wines in the data frame were scored at different average ratings. Champagne did not show any comparison because the wines scored around a 3.6 average rating 2 times because as shown in the boxplot, there were only 2 champagne wines in the data frame. Most of the wines scored lower (between 3.5 and 4.5) more frequently than they scored higher (above 4.5). Moscato scored almost evenly with around 9 average ratings of 3.9 and around 8 average ratings of 4.9. The cabernet sauvignon did not follow this trend since it scored just above a 3.5 around 17 times and scored just above a 4.5 around 24 times. Zinfandel also scored highly more frequently with around 23 average scores of 5.4 and around 13 average scores of 4.4. The largest difference in scoring frequencies appeared in the Riesling with over 45 occurrences of rating scores of 4.3 and 14 scores of 5.3. The amount of each wine type also plays a large affect in the outcome histogram because with more variables of a certain type comes more frequency points. 
 
 ```{r}
-library(ggplot2)
-gwinerating <- ggplot(data = wine_rec_df, aes(x = type, y = averageRating))
-gwinerating + geom_boxplot(fill = "grey") + geom_point(aes(color = type), position = "jitter", size = .5) +  xlab("Type of Wine") + ylab("Average Rating") + theme(axis.text.x = element_text(angle = 45))
-
-ggplot(wine_rec_df, aes(x=averageRating, fill = type, color = type)) + geom_histogram(binwidth = 1, position="dodge") + xlab("Average Rating") + ylab("Frequency")
+ggplot(wine_rec_df, aes(x=averageRating, fill = type, color = type)) + 
+  geom_histogram(binwidth = 1, position="dodge") + 
+  xlab("Average Rating") + 
+  ylab("Frequency") +
+  ggtitle("Histogram of Average Ratings for Wine (Position = dodge)")
 ```
+Before looking at the graph, it's important to note that for readability we used `dodge` to separate the bars for each wine in this histogram and have a bin width of 1. Simply put, this means that when you see the pink Zinfandel bar over in that 5.5 average rating area it does not mean they were actually rated above a 5. That is simply the frequency of Zinfandel wines that have an average rating between 4.5 and 5.
 
-
-
-
-### Cuisine and Macronutrient Contingency table
-
-We created a two way contingency table with cuisine and macronutrient content. For our fat values,American, Greek and Italian cuisine are tied with having the most amount of high fat content, followed closely by Japanese and French. Japanese, American and Greek/Mexican cuisine has the most amount of low fat content.American cuisine has the highest amount of dishes with high protein followed by Indian and Italian. Mexican has the highest low protein content followed by Greek and Japanese. Next, looking at carbohydrates, Italian has the highest high carbohydrate content followed by American and Mexican. Japanese has the greatest low carb content followed by Indian and Mexican.
-    
-
-
-### Cuisine and Diet Contingency table
-
-We created a two way contingency table with cuisine and diet.Mexican and Japanese has the highest gluten free, ketogenic, vegetarian, vegan, paleo and whole30 diets.
-
-
-Creating a contingency table for various cuisines across diets using the `get_total` function
-```{r}
-diet_list <- c("Gluten Free","Ketogenic","Vegetarian","Vegan","Paleo", "Whole30")
-Italian_totals <- diet_list %>% lapply(get_total, cuisine="Italian", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-American_totals <- diet_list %>% lapply(get_total, cuisine="American", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-Chinese_totals <- diet_list %>% lapply(get_total, cuisine="Chinese", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-French_totals <- diet_list %>% lapply(get_total, cuisine="French", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-Mexican_totals <- diet_list %>% lapply(get_total, cuisine="Mexican", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-Indian_totals <- diet_list %>% lapply(get_total, cuisine="Indian", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-Japanese_totals <- diet_list %>% lapply(get_total, cuisine="Japanese", API ="bba84b77f7f6471ab5cc81be8acdbe75" ) %>% bind_rows()
-long_totals <- bind_rows(Italian_totals, American_totals, Chinese_totals, French_totals, Mexican_totals, Indian_totals, Japanese_totals )
-wide_totals <- pivot_wider(true_totals, names_from = Diet, values_from = Total)
-wide_totals
-```
+Now, based upon this histogram, we can see that average rating of Rieslings is strongly clustered into that 3.5 to 4.5 bar mirroring the results of our previous box plot. Meanwhile, the Cabernet Sauvignons and Zinfadels are clustered almost equally at the lower end in the 3.5 to 4.5  and in the 4.5 to 5.5 sections suggesting reviewers tended to either have strong positive opinions or were rather lukewarm on them.
