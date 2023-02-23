@@ -1,6 +1,6 @@
 Project 2
 ================
-Brant Armstrong, Lexi Field, Richard Xiao
+Brant Armstrong
 2022-10-12
 
 # **Purpose**
